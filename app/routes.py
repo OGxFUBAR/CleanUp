@@ -62,3 +62,42 @@ def reservations():
 
     return render_template('reservations.html', reservations=reservations)
 
+
+@bp.route('/cleanup', methods=['GET', 'POST'])
+def cleanup():
+    if request.method == 'POST':
+        vehicle_number = request.form['vehicle_number']
+        cleaner_name = request.form['cleaner_name']
+
+        reservation = Reservation.query.filter_by(vehicle_number=vehicle_number).first()
+        if reservation:
+            cleaner_assignment = CleanerAssignment(
+                reservation_id=reservation.id,
+                cleaner_name=cleaner_name
+            )
+            db.session.add(cleaner_assignment)
+            db.session.commit()
+            flash(f"Cleaner {cleaner_name} is cleaning Unit {vehicle_number}.", "success")
+        else:
+            flash(f"Vehicle {vehicle_number} not found in reservations.", "danger")
+
+    # Show active cleanups
+    active_cleanups = CleanerAssignment.query.filter_by(end_time=None).all()
+    return render_template('cleanup.html', active_cleanups=active_cleanups)
+
+
+def archive_old_data():
+    threshold_date = datetime.now() - timedelta(days=30)
+
+    # Archive old reservations
+    old_reservations = Reservation.query.filter(Reservation.departure_time < threshold_date).all()
+    for res in old_reservations:
+        archive_entry = Archive(
+            vehicle_number=res.vehicle_number,
+            last_cleaned_at=res.last_cleaned_at,
+            last_reserved_at=res.departure_time
+        )
+        db.session.add(archive_entry)
+        db.session.delete(res)
+
+    db.session.commit()
