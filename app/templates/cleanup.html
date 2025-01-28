@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Cleanup List</h1>
+    <form action="{{ url_for('main.cleanup') }}" method="post" class="mb-4">
+        <div class="mb-3">
+            <label for="vehicle_number" class="form-label">Vehicle Number:</label>
+            <input type="text" class="form-control" id="vehicle_number" name="vehicle_number" required>
+        </div>
+        <div class="mb-3">
+            <label for="cleaner_name" class="form-label">Cleaner Name:</label>
+            <input type="text" class="form-control" id="cleaner_name" name="cleaner_name" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Claim Vehicle</button>
+    </form>
+
+    <h2>Currently Being Cleaned</h2>
+    {% if active_cleanups %}
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Vehicle Number</th>
+                <th>Cleaner Name</th>
+                <th>Start Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cleanup in active_cleanups %}
+            <tr>
+                <td>{{ cleanup.reservation.vehicle_number }}</td>
+                <td>{{ cleanup.cleaner_name }}</td>
+                <td>{{ cleanup.start_time }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No active cleanups at the moment.</p>
+    {% endif %}
+</div>
+{% endblock %}
