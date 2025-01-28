@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify
 from .models import Reservation, CleanerAssignment, Archive, db
 from datetime import datetime, timedelta
 import pandas as pd
@@ -162,4 +162,12 @@ def cleanup_logs():
 
     logs = CleanerAssignment.query.order_by(CleanerAssignment.start_time.desc()).all()
     return render_template('cleanup_logs.html', logs=logs)
+
+@bp.route('/migratedb', methods=['GET'])
+def migrate_db():
+    try:
+        upgrade()  # Run the migration
+        return jsonify({"status": "success", "message": "Database migration complete!"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
