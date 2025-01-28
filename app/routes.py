@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import os
 from werkzeug.utils import secure_filename
+from flask_login import login_required, current_user
 
 bp = Blueprint('main', __name__)
 
@@ -130,3 +131,13 @@ def archive_old_data():
         db.session.delete(res)
 
     db.session.commit()
+
+
+@bp.route('/logs')
+@login_required
+def logs():
+    if current_user.role != 'admin':
+        flash("Access denied. Admins only.", "danger")
+        return redirect(url_for('main.reservations'))
+    # Display logs
+    return render_template('logs.html')
