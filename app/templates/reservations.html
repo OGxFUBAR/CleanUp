@@ -10,6 +10,18 @@
         </div>
         <button type="submit" class="btn btn-primary">Upload</button>
     </form>
+<h2>Claim a Vehicle</h2>
+<form method="post" action="{{ url_for('main.reservations') }}">
+    <div class="mb-3">
+        <label for="vehicle_number" class="form-label">Vehicle Number:</label>
+        <input type="text" class="form-control" id="vehicle_number" name="vehicle_number" required>
+    </div>
+    <div class="mb-3">
+        <label for="cleaner_name" class="form-label">Cleaner Name:</label>
+        <input type="text" class="form-control" id="cleaner_name" name="cleaner_name" required>
+    </div>
+    <button type="submit" name="claim_vehicle" class="btn btn-primary">Claim Vehicle</button>
+</form>
 
     <h2>Upcoming Reservations</h2>
     {% if reservations %}
