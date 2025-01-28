@@ -36,3 +36,23 @@
     {% endif %}
 </div>
 {% endblock %}
+
+
+<script>
+    setInterval(() => {
+        const now = new Date();
+        document.querySelectorAll('tr[data-time]').forEach(row => {
+            const departureTime = new Date(row.getAttribute('data-time'));
+            const diffMinutes = (departureTime - now) / 60000;
+
+            if (diffMinutes <= 30) {
+                row.className = 'table-danger';
+            } else if (diffMinutes <= 60) {
+                row.className = 'table-warning';
+            } else {
+                row.className = 'table-success';
+            }
+        });
+    }, 60000); // Update every 60 seconds
+</script>
+
