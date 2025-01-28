@@ -168,10 +168,15 @@ def cleanup_logs():
 @bp.route('/migratedb', methods=['GET'])
 def migrate_db():
     try:
-        upgrade()  # Run the migration
+        # Check if the migrations directory exists
+        migrations_path = os.path.join(current_app.root_path, 'migrations')
+        if not os.path.exists(migrations_path):
+            from flask_migrate import init
+            init()  # Initialize the migrations folder
+
+        from flask_migrate import upgrade
+        upgrade()  # Run the database migration
         return jsonify({"status": "success", "message": "Database migration complete!"}), 200
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
         return jsonify({"status": "error", "message": str(e)}), 500
 
