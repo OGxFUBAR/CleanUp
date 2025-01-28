@@ -5,6 +5,8 @@ import pandas as pd
 import os
 from werkzeug.utils import secure_filename
 from flask_login import login_required, current_user
+from flask_migrate import upgrade
+
 
 bp = Blueprint('main', __name__)
 
@@ -169,5 +171,7 @@ def migrate_db():
         upgrade()  # Run the migration
         return jsonify({"status": "success", "message": "Database migration complete!"}), 200
     except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
         return jsonify({"status": "error", "message": str(e)}), 500
 
