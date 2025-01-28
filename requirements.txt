@@ -2,7 +2,7 @@ Flask==2.3.2
 Flask-SQLAlchemy==3.0.5
 Flask-Migrate==4.0.4
 Werkzeug==2.3.7
-numpy==1.25.3
+numpy==1.24.4
 pandas==2.1.1
 openpyxl==3.1.2
 gunicorn==21.0.1
