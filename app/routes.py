@@ -170,17 +170,22 @@ def migrate_db():
     try:
         from flask_migrate import init, migrate, upgrade
 
-        # Check if the migrations directory exists
+        # Path to the migrations directory
         migrations_path = os.path.join(current_app.root_path, 'migrations')
+
+        # Initialize the migrations folder if it does not exist
         if not os.path.exists(migrations_path):
-            init()  # Initialize the migrations folder
+            os.makedirs(migrations_path, exist_ok=True)  # Create the migrations folder
+            init(directory=migrations_path)  # Initialize the migrations folder
 
-        # Check if a migration file exists
+        # Check for migration files in the directory
         migration_files = os.listdir(migrations_path)
-        if len(migration_files) <= 1:  # Only the script folder and README
-            migrate(message="Initial migration")  # Create initial migration
+        if len(migration_files) <= 1:  # Only the README file exists
+            migrate(message="Initial migration")  # Generate the initial migration file
 
-        upgrade()  # Apply the migration
+        upgrade()  # Apply the migrations to the database
         return jsonify({"status": "success", "message": "Database migration complete!"}), 200
+
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
