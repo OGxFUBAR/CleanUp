@@ -145,3 +145,20 @@ def complete_cleanup(cleanup_id):
         flash("Cleanup not found or already completed.", "danger")
 
     return redirect(url_for('main.cleanup'))
+
+def archive_old_data():
+    threshold_date = datetime.now() - timedelta(days=30)
+
+    # Archive old reservations
+    old_reservations = Reservation.query.filter(Reservation.departure_time < threshold_date).all()
+    for res in old_reservations:
+        archive_entry = Archive(
+            vehicle_number=res.vehicle_number,
+            last_cleaned_at=res.last_cleaned_at,
+            last_reserved_at=res.departure_time
+        )
+        db.session.add(archive_entry)
+        db.session.delete(res)
+
+    db.session.commit()
+
