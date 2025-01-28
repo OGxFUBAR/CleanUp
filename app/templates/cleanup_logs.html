@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Cleanup Logs</h1>
+    {% if logs %}
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Vehicle Number</th>
+                <th>Cleaner Name</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.reservation.vehicle_number }}</td>
+                <td>{{ log.cleaner_name }}</td>
+                <td>{{ log.start_time }}</td>
+                <td>{{ log.end_time or 'In Progress' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No cleanup logs available.</p>
+    {% endif %}
+</div>
+{% endblock %}
