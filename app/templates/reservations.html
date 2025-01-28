@@ -2,39 +2,37 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="mb-3">Upload Reservations</h1>
-    <form action="{{ url_for('main.reservations') }}" method="post" enctype="multipart/form-data">
+    <h1>Reservations</h1>
+    <form action="{{ url_for('main.reservations') }}" method="post" enctype="multipart/form-data" class="mb-4">
         <div class="mb-3">
-            <label for="file" class="form-label">Upload CSV or Excel File:</label>
-            <input type="file" class="form-control" id="file" name="file" accept=".csv, .xlsx" required>
+            <label for="file" class="form-label">Upload Reservation Manifest (CSV or Excel):</label>
+            <input type="file" class="form-control" id="file" name="file" accept=".csv,.xlsx" required>
         </div>
         <button type="submit" class="btn btn-primary">Upload</button>
     </form>
 
-    <hr class="my-4">
-
-    <h2>Reservations</h2>
+    <h2>Upcoming Reservations</h2>
     {% if reservations %}
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Vehicle Number</th>
-                    <th>Departure Time</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for reservation in reservations %}
-                <tr>
-                    <td>{{ reservation.vehicle_number }}</td>
-                    <td>{{ reservation.departure_time }}</td>
-                    <td>{{ reservation.status }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Vehicle Number</th>
+                <th>Departure Time</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reservation in reservations %}
+            <tr class="{% if reservation.status == 'Urgent' %}table-danger{% elif reservation.status == 'Important' %}table-warning{% else %}table-success{% endif %}">
+                <td>{{ reservation.vehicle_number }}</td>
+                <td>{{ reservation.departure_time }}</td>
+                <td>{{ reservation.status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     {% else %}
-        <p>No reservations available. Upload a file to get started!</p>
+    <p>No reservations available. Upload a file to get started!</p>
     {% endif %}
 </div>
 {% endblock %}
