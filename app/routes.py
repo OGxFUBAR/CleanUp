@@ -7,6 +7,12 @@ from werkzeug.utils import secure_filename
 
 bp = Blueprint('main', __name__)
 
+
+@bp.route('/')
+def index():
+    return redirect(url_for('main.reservations'))
+
+
 # Upload and manage reservations
 @bp.route('/reservations', methods=['GET', 'POST'])
 def reservations():
