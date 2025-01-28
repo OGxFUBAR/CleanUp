@@ -18,12 +18,16 @@ def index():
 @bp.route('/reservations', methods=['GET', 'POST'])
 def reservations():
     if request.method == 'POST':
-        file = request.files['file']
+        file = request.files.get('file')
         if file:
-            # Save and process the uploaded file
             filename = secure_filename(file.filename)
             file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
             os.makedirs(current_app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+            if os.path.exists(file_path):
+                flash(f"File '{filename}' already uploaded.", "warning")
+                return redirect(url_for('main.reservations'))
+
             file.save(file_path)
 
             try:
@@ -31,21 +35,26 @@ def reservations():
                 data = pd.read_csv(file_path) if filename.endswith('.csv') else pd.read_excel(file_path)
 
                 # Validate required columns
-                if 'Unit #' not in data.columns or 'Pickup Date' not in data.columns:
-                    flash("File must contain 'Unit #' and 'Pickup Date' columns.", "danger")
+                required_columns = {'Unit #', 'Pickup Date'}
+                if not required_columns.issubset(data.columns):
+                    flash(f"File must contain the following columns: {', '.join(required_columns)}", "danger")
                     return redirect(url_for('main.reservations'))
 
                 # Update reservations
                 for _, row in data.iterrows():
                     vehicle_number = row['Unit #']
-                    departure_time = datetime.strptime(row['Pickup Date'], "%m/%d/%Y %I:%M %p")
-                    reservation = Reservation.query.filter_by(vehicle_number=vehicle_number).first()
+                    try:
+                        departure_time = parser.parse(row['Pickup Date'])
+                    except Exception:
+                        flash(f"Invalid date format for vehicle {vehicle_number}.", "danger")
+                        continue
 
+                    reservation = Reservation.query.filter_by(vehicle_number=vehicle_number).first()
                     if not reservation:
                         reservation = Reservation(vehicle_number=vehicle_number, departure_time=departure_time)
                         db.session.add(reservation)
                     else:
-                        reservation.departure_time = departure_time  # Update if reservation exists
+                        reservation.departure_time = departure_time  # Update existing reservation
 
                 db.session.commit()
                 flash("Reservations imported successfully.", "success")
@@ -65,9 +74,11 @@ def reservations():
             reservation.status = "Important"
         else:
             reservation.status = "Upcoming"
-        db.session.commit()
+
+    db.session.commit()  # Commit all updates
 
     return render_template('reservations.html', reservations=reservations)
+
 
 # Manage cleanup list and active cleanups
 @bp.route('/cleanup', methods=['GET', 'POST'])
