@@ -13,47 +13,52 @@ def reservations():
     if request.method == 'POST':
         file = request.files['file']
         if file:
-            # Save uploaded file
-            upload_folder = os.path.join(os.getcwd(), 'uploads')
-            os.makedirs(upload_folder, exist_ok=True)
+            # Save and process the uploaded file
             filename = secure_filename(file.filename)
-            file_path = os.path.join(upload_folder, filename)
+            file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            os.makedirs(current_app.config['UPLOAD_FOLDER'], exist_ok=True)
             file.save(file_path)
 
-            # Process CSV or Excel
             try:
-                if filename.endswith('.csv'):
-                    data = pd.read_csv(file_path)
-                elif filename.endswith('.xlsx'):
-                    data = pd.read_excel(file_path)
-                else:
-                    flash("Unsupported file type. Please upload a CSV or Excel file.", "danger")
-                    return redirect(url_for('main.reservations'))
+                # Process the file
+                data = pd.read_csv(file_path) if filename.endswith('.csv') else pd.read_excel(file_path)
 
                 # Validate required columns
-                if 'Vehicle Number' not in data.columns or 'Departure Time' not in data.columns:
-                    flash("The file must contain 'Vehicle Number' and 'Departure Time' columns.", "danger")
+                if 'Unit #' not in data.columns or 'Pickup Date' not in data.columns:
+                    flash("File must contain 'Unit #' and 'Pickup Date' columns.", "danger")
                     return redirect(url_for('main.reservations'))
 
-                # Save data to the database
+                # Update reservations
                 for _, row in data.iterrows():
-                    vehicle_number = row['Vehicle Number']
-                    departure_time = datetime.strptime(row['Departure Time'], "%Y-%m-%d %H:%M:%S")
-                    reservation = Reservation(
-                        vehicle_number=vehicle_number,
-                        departure_time=departure_time,
-                        status="Pending"
-                    )
-                    db.session.add(reservation)
+                    vehicle_number = row['Unit #']
+                    departure_time = datetime.strptime(row['Pickup Date'], "%m/%d/%Y %I:%M %p")
+                    reservation = Reservation.query.filter_by(vehicle_number=vehicle_number).first()
+
+                    if not reservation:
+                        reservation = Reservation(vehicle_number=vehicle_number, departure_time=departure_time)
+                        db.session.add(reservation)
+                    else:
+                        reservation.departure_time = departure_time  # Update if reservation exists
 
                 db.session.commit()
-                flash("File uploaded and reservations added successfully!", "success")
+                flash("Reservations imported successfully.", "success")
             except Exception as e:
                 flash(f"Error processing file: {e}", "danger")
 
-            # Clean up uploaded file
-            os.remove(file_path)
+            os.remove(file_path)  # Clean up uploaded file
 
-    # Retrieve all reservations to display
+    # Fetch reservations with dynamic status
+    now = datetime.now()
     reservations = Reservation.query.all()
+    for reservation in reservations:
+        delta = (reservation.departure_time - now).total_seconds() / 60  # Minutes until departure
+        if delta <= 30:
+            reservation.status = "Urgent"
+        elif delta <= 60:
+            reservation.status = "Important"
+        else:
+            reservation.status = "Upcoming"
+        db.session.commit()
+
     return render_template('reservations.html', reservations=reservations)
+
