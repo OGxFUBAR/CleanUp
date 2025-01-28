@@ -2,12 +2,13 @@ from . import db
 from datetime import datetime
 
 class Reservation(db.Model):
-    id = db.Column(db.Integer, primary_key=True)  # Primary key for the reservation
-    vehicle_number = db.Column(db.String(50), nullable=False)  # The vehicle's unique identifier
-    departure_time = db.Column(db.DateTime, nullable=False)  # When the vehicle departs
-    status = db.Column(db.String(20), default="Pending")  # The status of the reservation (e.g., Pending, Completed)
-    cleaners = db.relationship('CleanerAssignment', backref='reservation', lazy=True)  
-    # One-to-many relationship with CleanerAssignment
+    id = db.Column(db.Integer, primary_key=True)
+    vehicle_number = db.Column(db.String(50), nullable=False)
+    departure_time = db.Column(db.DateTime, nullable=False)
+    status = db.Column(db.String(20), default="Pending")
+    last_cleaned_at = db.Column(db.DateTime, nullable=True)  # Tracks the last time it was cleaned
+    cleaners = db.relationship('CleanerAssignment', backref='reservation', lazy=True)
+
 
 
 class Cleaner(db.Model):
@@ -15,11 +16,13 @@ class Cleaner(db.Model):
     name = db.Column(db.String(100), nullable=False)
 
 class CleanerAssignment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)  # Primary key for cleaner assignments
-    reservation_id = db.Column(db.Integer, db.ForeignKey('reservation.id'), nullable=False)  
-    # Foreign key linking to the Reservation model
-    cleaner_name = db.Column(db.String(100), nullable=False)  # Name of the cleaner
-    assigned_at = db.Column(db.DateTime, default=db.func.now())  # Timestamp of the assignment
+    id = db.Column(db.Integer, primary_key=True)
+    reservation_id = db.Column(db.Integer, db.ForeignKey('reservation.id'), nullable=False)
+    cleaner_name = db.Column(db.String(100), nullable=False)
+    start_time = db.Column(db.DateTime, default=db.func.now())  # When the cleaner started
+    end_time = db.Column(db.DateTime, nullable=True)  # When the cleaner completed cleaning
+    participants = db.Column(db.String(255), nullable=True)  # Names of helpers (if any)
+
 
 
 class ManualCleanup(db.Model):
@@ -27,3 +30,10 @@ class ManualCleanup(db.Model):
     vehicle_number = db.Column(db.String(50), nullable=True)
     type = db.Column(db.String(20), nullable=False)  # 'Unit' or 'Sales'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Archive(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    vehicle_number = db.Column(db.String(50), nullable=False)
+    last_cleaned_at = db.Column(db.DateTime, nullable=True)
+    last_reserved_at = db.Column(db.DateTime, nullable=False)
