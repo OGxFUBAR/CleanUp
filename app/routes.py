@@ -101,3 +101,47 @@ def archive_old_data():
         db.session.delete(res)
 
     db.session.commit()
+
+@bp.route('/cleanup', methods=['GET', 'POST'])
+def cleanup():
+    if request.method == 'POST':
+        vehicle_number = request.form['vehicle_number']
+        cleaner_name = request.form['cleaner_name']
+
+        reservation = Reservation.query.filter_by(vehicle_number=vehicle_number).first()
+        if reservation:
+            # Check if the vehicle is already being cleaned
+            active_cleanup = CleanerAssignment.query.filter_by(
+                reservation_id=reservation.id, end_time=None
+            ).first()
+
+            if active_cleanup:
+                flash(f"Vehicle {vehicle_number} is already being cleaned by {active_cleanup.cleaner_name}.", "warning")
+            else:
+                # Create a new cleaner assignment
+                cleaner_assignment = CleanerAssignment(
+                    reservation_id=reservation.id,
+                    cleaner_name=cleaner_name
+                )
+                db.session.add(cleaner_assignment)
+                db.session.commit()
+                flash(f"Cleaner {cleaner_name} is cleaning Unit {vehicle_number}.", "success")
+        else:
+            flash(f"Vehicle {vehicle_number} not found in reservations.", "danger")
+
+    # Show active cleanups
+    active_cleanups = CleanerAssignment.query.filter_by(end_time=None).all()
+    return render_template('cleanup.html', active_cleanups=active_cleanups)
+
+@bp.route('/complete_cleanup/<int:cleanup_id>', methods=['POST'])
+def complete_cleanup(cleanup_id):
+    cleaner_assignment = CleanerAssignment.query.get(cleanup_id)
+    if cleaner_assignment and cleaner_assignment.end_time is None:
+        cleaner_assignment.end_time = datetime.now()
+        cleaner_assignment.reservation.last_cleaned_at = datetime.now()
+        db.session.commit()
+        flash(f"Vehicle {cleaner_assignment.reservation.vehicle_number} has been cleaned by {cleaner_assignment.cleaner_name}.", "success")
+    else:
+        flash("Cleanup not found or already completed.", "danger")
+
+    return redirect(url_for('main.cleanup'))
