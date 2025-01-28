@@ -141,3 +141,14 @@ def logs():
         return redirect(url_for('main.reservations'))
     # Display logs
     return render_template('logs.html')
+
+@bp.route('/cleanup_logs')
+@login_required
+def cleanup_logs():
+    if current_user.role != 'admin':
+        flash("Access denied. Admins only.", "danger")
+        return redirect(url_for('main.reservations'))
+
+    logs = CleanerAssignment.query.order_by(CleanerAssignment.start_time.desc()).all()
+    return render_template('cleanup_logs.html', logs=logs)
+
